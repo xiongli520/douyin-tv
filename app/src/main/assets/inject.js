@@ -92,6 +92,16 @@
         });
     }
 
+    // 抖音播放器在自动播放被拒时会强制 muted，且每次切换视频都新建一个 <video>。
+    // 在捕获阶段监听 play 事件：视频一开播就立刻取消静音，新插入的元素也能覆盖到，
+    // 不用等 2 秒轮询。
+    document.addEventListener('play', function(e) {
+        var v = e.target;
+        if (!v || v.tagName !== 'VIDEO') return;
+        if (v.muted) v.muted = false;
+        try { if (v.volume < 0.5) v.volume = 1.0; } catch (err) {}
+    }, true);
+
     // ==================== AUTO-NAVIGATE TO RECOMMEND (one-shot) ====================
     var recommendTried = false;
     function switchToRecommend() {

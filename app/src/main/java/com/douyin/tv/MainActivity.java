@@ -65,6 +65,11 @@ public class MainActivity extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
+        // 关键：WebView 默认要求"用户手势"才允许带声音播放。
+        // 不关闭的话，抖音播放器带声音自动播放会被拦，播放器随即把 muted 强制设回 true，
+        // 之后 JS 再改 muted=false 也无效 —— 这就是电视上一直没声音的根因。
+        settings.setMediaPlaybackRequiresUserGesture(false);
+
         // Performance: cache + DOM storage
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setDomStorageEnabled(true);
@@ -101,9 +106,16 @@ public class MainActivity extends Activity {
                     loadingOverlay.setVisibility(View.GONE);
                 }
                 if (newProgress >= 90) {
-                    // Unmute videos
+                    // 取消静音，并主动调一次 play() 让浏览器重新走"带声音播放"的判定
                     view.evaluateJavascript(
-                        "document.querySelectorAll('video').forEach(function(v){v.muted=false;v.volume=1.0;});",
+                        "(function(){" +
+                        "var vs=document.querySelectorAll('video');" +
+                        "for(var i=0;i<vs.length;i++){" +
+                        "  var v=vs[i];v.muted=false;" +
+                        "  try{v.volume=1.0;}catch(e){}" +
+                        "  try{var p=v.play();if(p&&p.catch)p.catch(function(){});}catch(e){}" +
+                        "}" +
+                        "})();",
                         null
                     );
                     // Only try to switch to recommend ONCE on first load

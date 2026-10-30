@@ -37,6 +37,3 @@ body {
     -webkit-font-smoothing: antialiased !important;
     text-rendering: optimizeSpeed !important;
 }
-
-/* Force unmute all videos */
-video { muted: false !important; }
